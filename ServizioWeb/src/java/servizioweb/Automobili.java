@@ -176,105 +176,60 @@ public class Automobili extends HttpServlet {
 
     @Override
     protected void doPut(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
-        String url_name;
-        String url;
-        String line;
-        String[] url_section;
+         response.setContentType("text/html");
+       response.setCharacterEncoding("UTF-8"); 
 
-        // verifica stato connessione a DBMS
+      String targa = request.getParameter("targa");
+      Integer ricercato = -1;
+      String stringaSql ="";
+
         if (!connected) {
             response.sendError(500, "DBMS server error!");
             return;
         }
-        // estrazione nominativo da URL
-        url = request.getRequestURL().toString();
-        url_section = url.split("/");
-        url_name = url_section[url_section.length - 1];
-        if (url_name == null) {
-            response.sendError(400, "Request syntax error!");
-            return;
-        }
-        if (url_name.isEmpty()) {
-            response.sendError(400, "Request syntax error!");
-            return;
-        }
+
+      Statement statement = null;
+        
         try {
-            // scrittura nel file "entry.xml" del body della richiesta
-            BufferedReader input = request.getReader();
-            BufferedWriter file = new BufferedWriter(new FileWriter("entry.xml"));
-            while ((line = input.readLine()) != null) {
-                file.write(line);
-                file.newLine();
-            }
-            input.close();
-            file.flush();
-            file.close();
-
-            DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
-            DocumentBuilder builder = factory.newDocumentBuilder();
-            Document document = builder.parse("entry.xml");
-            Element root = document.getDocumentElement();
-
-            NodeList list = root.getElementsByTagName("titolo");
-            String titolo = null;
-            if (list != null && list.getLength() > 0) {
-                titolo = list.item(0).getFirstChild().getNodeValue();
-            }
-
-            list = root.getElementsByTagName("descrizione");
-            String descrizione = null;
-            if (list != null && list.getLength() > 0) {
-                descrizione = list.item(0).getFirstChild().getNodeValue();
-            }
-
-            list = root.getElementsByTagName("tagIdentificativo");
-            String tagIdentificativo = null;
-            if (list != null && list.getLength() > 0) {
-                tagIdentificativo = list.item(0).getFirstChild().getNodeValue();
-            }
-
-            list = root.getElementsByTagName("rilevante");
-            String rilevante = null;
-            if (list != null && list.getLength() > 0) {
-                rilevante = list.item(0).getFirstChild().getNodeValue();
-            }
-
-            list = root.getElementsByTagName("livelloAutorizzativo");
-            String livelloAutorizzativo = null;
-            if (list != null && list.getLength() > 0) {
-                livelloAutorizzativo = list.item(0).getFirstChild().getNodeValue();
-            }
-
-            if (titolo == null || descrizione == null || tagIdentificativo == null || rilevante == null || livelloAutorizzativo == null) {
-                response.sendError(400, "Malformed XML!");
-                return;
-            }
-            if (titolo.isEmpty() || descrizione.isEmpty() || tagIdentificativo.isEmpty() || rilevante.isEmpty() || livelloAutorizzativo.isEmpty()) {
-                response.sendError(400, "Malformed XML!");
-                return;
-            }
-            if (!titolo.equalsIgnoreCase(url_name)) {
-                response.sendError(400, "URL name mismtach XML name!");
-                return;
-            }
-            try {
-                Statement statement = conn.createStatement();
-                if (statement.executeUpdate("UPDATE circolari SET Number='" + "number" + "'WHERE Name = '" + "name" + "';") <= 0) {
-                    response.sendError(404, "Entry not found!");
-                    statement.close();
-                    return;
-                }
-                statement.close();
-            } catch (SQLException e) {
-                response.sendError(500, "DBMS server error!");
-                return;
-            }
-            response.setStatus(204); // OK
-        } catch (ParserConfigurationException e) {
-            response.sendError(500, "XML parser error!");
-        } catch (SAXException e) {
-            response.sendError(500, "XML parser error!");
+            statement = conn.createStatement();
+        } catch (SQLException ex) {
+            Logger.getLogger(Automobili.class.getName()).log(Level.SEVERE, null, ex);
         }
+        String sql = "SELECT * FROM automobili WHERE targa = '" + targa +"'";
+        ResultSet result;
+        try {
+            result = statement.executeQuery(sql);
+        
+        while(result.next()) {
+            ricercato = result.getInt(5);
+        }
+        
+        if (ricercato == 1){
+            stringaSql = "UPDATE automobili SET ricercata=0 WHERE targa='"+targa.toString()+"'";
+        } else {
+            stringaSql = "UPDATE automobili SET ricercata=1 WHERE targa='"+targa.toString()+"'";
+        }
+        } catch (SQLException ex) {
+            Logger.getLogger(Automobili.class.getName()).log(Level.SEVERE, null, ex);
+        } 
+        try {
+            if (statement.executeUpdate(stringaSql) <= 0) {
+                statement.close();
+                return;
+            }
+        } catch (SQLException ex) {
+            Logger.getLogger(Automobili.class.getName()).log(Level.SEVERE, null, ex);
+        }
+        
+        
+        
+        try {
+            statement.close();
+        } catch (SQLException ex) {
+            Logger.getLogger(Automobili.class.getName()).log(Level.SEVERE, null, ex);
+        }
+        
+
     }
 
     @Override
