@@ -46,6 +46,14 @@ public class Client {
                     ws.printResult();
                     break;
                 }
+                case 2:{
+                    System.out.println("inserisci targa da segnalare");
+                    String targa = br.readLine();
+
+                    System.out.println(ws.sendPut(targa));
+                    
+                    break;
+                }
                 case 3:{
                     System.out.println("Inserisci Nuovo Veicolo");
                     

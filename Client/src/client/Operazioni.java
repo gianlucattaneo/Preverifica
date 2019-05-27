@@ -132,7 +132,7 @@ public class Operazioni {
         return statusChiamata;
     }
     
-   public int inserisciMacchina(String targa, String ScadenzaAssicurazione , String ScadenzaBollo, String ClasseInquinamento, String Ricercato) throws ParserConfigurationException, SAXException
+    public int inserisciMacchina(String targa, String ScadenzaAssicurazione , String ScadenzaBollo, String ClasseInquinamento, String Ricercato) throws ParserConfigurationException, SAXException
     {
 
         try {
@@ -149,6 +149,40 @@ public class Operazioni {
 
             String urlParameters = "targa="+targa+"&ScadenzaAssicurazione="+ScadenzaAssicurazione+"&ScadenzaBollo="+ScadenzaBollo+"&ClasseInquinamento="+ClasseInquinamento+"&Ricercato="+Ricercato;
             service.setDoOutput(true);
+            DataOutputStream wr = new DataOutputStream(service.getOutputStream());
+            wr.writeBytes(urlParameters);
+            wr.flush();
+            wr.close();
+
+            service.connect();
+
+            statusChiamata = service.getResponseCode();
+
+            return statusChiamata;
+        } catch (UnsupportedEncodingException ex) {
+            Logger.getLogger(Operazioni.class.getName()).log(Level.SEVERE, null, ex);
+        } catch (MalformedURLException ex) {
+            Logger.getLogger(Operazioni.class.getName()).log(Level.SEVERE, null, ex);
+        } catch (IOException ex) {
+            Logger.getLogger(Operazioni.class.getName()).log(Level.SEVERE, null, ex);
+        }
+        return statusChiamata;
+    }
+    
+    int sendPut(String targa) {
+        try {
+
+            URL server = new URL(baseUrl+"?targa="+targa);
+            HttpURLConnection service = (HttpURLConnection) server.openConnection();
+
+            service.setRequestProperty("Host", "www.gerriquez.com");
+            service.setRequestProperty("Accept", "application/text");
+            service.setRequestProperty("Accept-Charset", "UTF-8");
+
+            service.setDoOutput(true);
+            service.setRequestMethod("PUT");
+
+            String urlParameters = "targa="+targa;
             DataOutputStream wr = new DataOutputStream(service.getOutputStream());
             wr.writeBytes(urlParameters);
             wr.flush();
